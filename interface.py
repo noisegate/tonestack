@@ -90,9 +90,19 @@ class Interface(object):
             i=0
 
             while ser.inWaiting() > 0:
-                self.screen.addstr(5,2+i,ser.read(1))
+                self.screen.addstr(3,2+i,ser.read(1))
                 i=i+1
                 self.screen.addstr(0,0,"Tone Control Interface".center(self.width), curses.A_REVERSE)
+                self.screen.addstr(5,2, "V = Volume")
+                self.screen.addstr(6,2, "B = Bass  ")
+                self.screen.addstr(7,2, "N = Mid bass")
+                self.screen.addstr(8,2, "M = Mid   ")
+                self.screen.addstr(9,2, "Y = Mid treble")
+                self.screen.addstr(10,2,"T = Treble")
+                self.screen.addstr(11,2,"d = defeat")
+                self.screen.addstr(12,2,"E = Bass  Enhance")
+                self.screen.addstr(13,2,"q = quit  ")
+
                 self.screen.refresh()
 
 
