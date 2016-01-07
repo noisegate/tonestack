@@ -7,4 +7,4 @@ as interface
 
 ![alt text][screenshot]
 
-[screenshot]: https://github.com/noisegate/tonestack/artwork/tonectrl.png
+[screenshot]: https://github.com/noisegate/tonestack/blob/master/artwork/tonectrl.png
