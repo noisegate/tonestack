@@ -162,6 +162,7 @@ class Interface(object):
                 self.Midtreblebar.set(float(vals[3]))
                 self.Treblebar.set(float(vals[4]))
                 self.Volbar.set(float(vals[6]))
+                self.screen.addstr(0,0,"Tone Control Interface".center(self.width), curses.A_REVERSE)
 
                 self.screen.refresh()
 
