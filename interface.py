@@ -10,21 +10,30 @@ ser = serial.Serial(
     )
 
 class Bar(object):
+    TONE = 1
+    VOL = 2
 
-    def __init__(self, screen,x ,y, name):
+    def __init__(self, screen,x ,y, name, legend, function):
         self.screen = screen
         self.x = x
         self.y = y
-        self.height = 10
+        self.height = 20
         self.width = 5
         self.name = name
-
+        self.legend = legend
+        self.function = function
 
     def set(self, val):
 
-        ival = int(val * self.height)
+        if (self.function == self.TONE):
+            ival = int(val * self.height/2)+self.height/2
+            self.screen.addstr(self.y-1, self.x, "{0}dB".format(val/0.04*0.5))
+        else:
+            ival = int(val * self.height)
+            self.screen.addstr(self.y-1, self.x, "{0}%".format(val*100))
 
         self.screen.addstr(self.y-2, self.x, self.name)
+        self.screen.addstr(self.y+self.height+2,self.x,self.legend)
 
         for i in range(self.height):
             for j in range(self.width):
@@ -55,11 +64,15 @@ class Interface(object):
         
         ser.isOpen()
 
-        self.Bassbar = Bar(self.screen, 10,20, "Bass" )
-        self.Midbassbar = Bar(self.screen, 20, 20,"Alt")
-        self.Midbar = Bar(self.screen, 30,20,"Mid")
-        self.Midtreblebar = Bar(self.screen,40, 20,"Tenor")
-        self.Treblebar = Bar(self.screen, 50, 20,"Treble")
+        offset = 40
+
+        self.Bassbar = Bar(self.screen, offset+0,15, "115Hz","B/b", Bar.TONE )
+        self.Midbassbar = Bar(self.screen, offset+10, 15,"330Hz","N/n", Bar.TONE)
+        self.Midbar = Bar(self.screen, offset+20,15,"990Hz","M/m",Bar.TONE)
+        self.Midtreblebar = Bar(self.screen,offset+30, 15,"3kHz","Y/y",Bar.TONE)
+        self.Treblebar = Bar(self.screen, offset+40, 15,"9.9kHz","T/t",Bar.TONE)
+        self.Volbar = Bar(self.screen, offset + 80, 15, "Volume","V/v",Bar.VOL)
+
 
     def loop(self):
         go = 1
@@ -128,16 +141,16 @@ class Interface(object):
                 msg.append(dummy)
                 #self.screen.addstr(3,2,s)
                 i=i+1
-                self.screen.addstr(0,0,"Tone Control Interface".center(self.width), curses.A_REVERSE)
-                self.screen.addstr(5,2, "V = Volume")
-                self.screen.addstr(6,2, "B = Bass  ")
-                self.screen.addstr(7,2, "N = Mid bass")
-                self.screen.addstr(8,2, "M = Mid   ")
-                self.screen.addstr(9,2, "Y = Mid treble")
-                self.screen.addstr(10,2,"T = Treble")
-                self.screen.addstr(11,2,"d = defeat")
-                self.screen.addstr(12,2,"E = Bass  Enhance")
-                self.screen.addstr(13,2,"q = quit  ")
+                #self.screen.addstr(0,0,"Tone Control Interface".center(self.width), curses.A_REVERSE)
+                #self.screen.addstr(5,2, "V = Volume")
+                #self.screen.addstr(6,2, "B = Bass  ")
+                #self.screen.addstr(7,2, "N = Mid bass")
+                #self.screen.addstr(8,2, "M = Mid   ")
+                #self.screen.addstr(9,2, "Y = Mid treble")
+                #self.screen.addstr(10,2,"T = Treble")
+                #self.screen.addstr(11,2,"d = defeat")
+                #self.screen.addstr(12,2,"E = Bass  Enhance")
+                #self.screen.addstr(13,2,"q = quit  ")
 
             if (i>0):
                 self.screen.addstr(3,2,''.join(msg))
@@ -148,7 +161,8 @@ class Interface(object):
                 self.Midbar.set(float(vals[2]))
                 self.Midtreblebar.set(float(vals[3]))
                 self.Treblebar.set(float(vals[4]))
-       
+                self.Volbar.set(float(vals[6]))
+
                 self.screen.refresh()
 
 
