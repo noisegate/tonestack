@@ -1,5 +1,6 @@
 import curses
 import serial
+from time import sleep
 
 ser = serial.Serial(
     port='/dev/ttyACM0',
@@ -73,11 +74,14 @@ class Interface(object):
         self.Treblebar = Bar(self.screen, offset+40, 15,"9.9kHz","T/t",Bar.TONE)
         self.Volbar = Bar(self.screen, offset + 80, 15, "Volume","V/v",Bar.VOL)
 
+        ser.write('?')
+
 
     def loop(self):
         go = 1
 
         while(go):
+            sleep(0.1)
             c = self.screen.getch()
             if (c == ord('B')):
                 self.screen.addstr(2,2,"State change: Bass +".ljust(30))
