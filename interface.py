@@ -52,7 +52,8 @@ class Hline(object):
 
 class Checkbox(object):
 
-    pass
+    def __init__(self):
+        pass
 
 
 
@@ -120,7 +121,7 @@ class Interface(object):
         self.Midtreblebar = Bar(self.screen,offset+30, 15,"3kHz","Y/y",Bar.TONE)
         self.Treblebar = Bar(self.screen, offset+40, 15,"9.9kHz","T/t",Bar.TONE)
         self.Volbar = Bar(self.screen, offset + 80, 15, "Volume","V/v",Bar.VOL)
-
+        self.Peakl = Bar(self.screen, offset + 70, 15, "Peak", " ", Bar.VOL)
         self.Eqbox = Box(self.screen, offset-2, 12 , 90, 28)
         self.Eqsplit = Hline(self.screen, offset-2, 25, 90)
         ser.write('?')
@@ -131,59 +132,65 @@ class Interface(object):
 
         while(go):
             sleep(0.1)
+            peak=0
             c = self.screen.getch()
             if (c == ord('B')):
                 self.screen.addstr(2,2,"State change: Bass +".ljust(30))
                 ser.write('B')
-            if (c == ord('b')):
+            elif (c == ord('b')):
                 self.screen.addstr(2,2,"State change: Bass -".ljust(30))
                 ser.write('b')
-            if (c == ord('M')):
+            elif (c == ord('M')):
                 self.screen.addstr(2,2,"State change: Mid +".ljust(30))
                 ser.write('M')
-            if (c == ord('m')):
+            elif (c == ord('m')):
                 self.screen.addstr(2,2,"State change: Mid -".ljust(30))
                 ser.write('m')
-            if (c == ord('N')):
+            elif (c == ord('N')):
                 self.screen.addstr(2,2,"State change: Mid Bass +".ljust(30))
                 ser.write('N')
-            if (c == ord('n')):
+            elif (c == ord('n')):
                 self.screen.addstr(2,2,"State change: Mid Bass -".ljust(30))
                 ser.write('n')
-            if (c == ord('T')):
+            elif (c == ord('T')):
                 self.screen.addstr(2,2,"State change: Treble +".ljust(30))
                 ser.write('T')
-            if (c == ord('t')):
+            elif (c == ord('t')):
                 self.screen.addstr(2,2,"State change: Treble -".ljust(30))
                 ser.write('t')
-            if (c == ord('Y')):
+            elif (c == ord('Y')):
                 self.screen.addstr(2,2,"State change: Mid Treble +".ljust(30))
                 ser.write('Y')
-            if (c == ord('y')):
+            elif (c == ord('y')):
                 self.screen.addstr(2,2,"State change: Mid Treble -".ljust(30))
                 ser.write('y')
-            if (c == ord('d')):
+            elif (c == ord('d')):
                 self.screen.addstr(2,2,"State change: tone defeat".ljust(30))
                 ser.write('d')
-            if (c == ord('L')):
+            elif (c == ord('L')):
                 self.screen.addstr(2,2,"left".ljust(30))
                 ser.write('L')
-            if (c == ord('l')):
+            elif (c == ord('l')):
                 self.screen.addstr(2,2,"right".ljust(30))
                 ser.write('l')
-
-
-            if (c == ord('v')):
+            elif (c == ord('D')):
+                self.screen.addstr(2,2,"disable tone ctrl".ljust(30))
+                ser.write('d')#defeat first
+                ser.write('D')
+            elif (c== ord('e')):
+                self.screen.addstr(2,2,"enable tone ctrl".ljust(30))
+                ser.write('e')
+            elif (c == ord('v')):
                 self.screen.addstr(2,2,"V".ljust(30))
                 ser.write('v')
-            if (c == ord('V')):
+            elif (c == ord('V')):
                 self.screen.addstr(2,2,"V".ljust(30))
                 ser.write('V')
-
-            if (c == ord('q')):
+            elif (c == ord('q')):
                 self.quit()
                 return
-
+            else:
+                peak = 1 
             i=0
 
             msg = []
@@ -217,6 +224,9 @@ class Interface(object):
                 self.Midtreblebar.set(float(vals[3]))
                 self.Treblebar.set(float(vals[4]))
                 self.Volbar.set(float(vals[6]))
+                if (peak):
+                    self.Peakl.set(float(vals[8]))
+
                 self.screen.addstr(0,0,"Tone Control Interface".center(self.width), curses.A_REVERSE)
                 self.screen.refresh()
 

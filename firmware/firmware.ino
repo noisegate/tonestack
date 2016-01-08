@@ -30,6 +30,20 @@ AudioConnection c2(audioInput, 1, audioOutput, 1); // right passing through
 // 
 AudioControlSGTL5000 audioShield;
 
+
+//fft stuff
+//AudioAnalyzeFFT256       fft256_1;       //xy=271,49
+//AudioConnection          patchCord1(adc1, fft256_1);
+
+//peak stuff
+//AudioAnalyzePeak         peak1;          //xy=352,74
+//AudioAnalyzePeak         peak2;          //xy=358,112
+//AudioConnection          patchCord1(audioInput, 0, peak1, 0);
+//AudioConnection          patchCord2(audioInput, 1, peak2, 0);
+
+
+
+
 void setup() {
   // Audio connections require memory to work.  For more
   // detailed information, see the MemoryAndCpuUsage example
@@ -73,6 +87,7 @@ float sign;
 int inByte;
 int step;
 int level=2;//default 
+float peakval=0.0;
 
 void reduce(float *parameter)
 {
@@ -91,6 +106,14 @@ void reduce(float *parameter)
   
 }
 
+void defeat(){
+  if (bass!=0.0) reduce(&bass);
+  if (treble!=0.0) reduce(&treble);
+  if (midbass!=0.0) reduce(&midbass);
+  if (midtreble!=0.0) reduce(&midtreble);
+  if (mid!=0.0) reduce(&mid);
+}
+
 void loop() {
   // every 10 ms, check for adjustment
   if (chgMsec > 50) { // more regular updates for actual changes seems better.
@@ -100,13 +123,15 @@ void loop() {
     if (Serial.available()>0){
       inByte = Serial.read();
       if (inByte=='d'){
-
-        if (bass!=0.0) reduce(&bass);
-        if (treble!=0.0) reduce(&treble);
-        if (midbass!=0.0) reduce(&midbass);
-        if (midtreble!=0.0) reduce(&midtreble);
-        if (mid!=0.0) reduce(&mid);
-        //defeat
+        defeat();
+       }
+      if (inByte=='D'){
+        defeat();
+        audioShield.audioProcessorDisable();
+      }
+      if (inByte=='e'){
+        defeat();
+        audioShield.audioPostProcessorEnable();
       }
       if (inByte == 'B'){
         bass += 0.04;
@@ -163,6 +188,12 @@ void loop() {
 
       audioShield.eqBands(bass, midbass, mid, midtreble, treble);
       audioShield.volume(vol);
+
+      /*
+      if (peak1.available()){
+        peakval = peak1.read();
+      }
+      */
       
       //Serial.print("Tone settings Bass: ");
       Serial.print(bass);
@@ -179,7 +210,9 @@ void loop() {
       Serial.print(":");
       Serial.print(vol);
       Serial.print(":");
-      Serial.println(vpp[level]);
+      Serial.print(vpp[level]);
+      Serial.print(":");
+      Serial.println(peakval);
 
     }
 
