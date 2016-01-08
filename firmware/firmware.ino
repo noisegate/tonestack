@@ -12,7 +12,8 @@ This example code is in the public domain
 
 const int myInput = AUDIO_INPUT_LINEIN;
 // const int myInput = AUDIO_INPUT_MIC;
-
+const int linelevel[] = {31,30,29,28,27,26,25,24,23,22,21,20,19,18,17,16,15,14,13};
+const float vpp[] = {1.16,1.22,1.29,1.37,1.44,1.53,1.62,1.71,1.8,1.91,2.02,2.14,2.26,2.39,2.53,2.67,2.83,2.98,3.16};
 // Create the Audio components.  These should be created in the
 // order data flows, inputs/sources -> processing -> outputs
 //
@@ -71,6 +72,7 @@ float diff;
 float sign;
 int inByte;
 int step;
+int level=2;//default 
 
 void reduce(float *parameter)
 {
@@ -145,16 +147,18 @@ void loop() {
         vol -= 0.04;
       }
 
-      if (inByte == 'l'){
-        left -=0.04;
-        right +=0.04;
-        //audioShield.lineOutLevel(left, right);
+      if (inByte == 'L'){
+        level++;
+        if (level>18) level=18;
+        
+        audioShield.lineOutLevel(linelevel[level]);
       }
 
-      if (inByte == 'r'){
-        left +=0.04;
-        right -=0.04;
-        //audioShield.lineOutLevel(left, right);
+      if (inByte == 'l'){
+        level--;
+        if (level<0) level=0;
+        
+        audioShield.lineOutLevel(linelevel[level]);
       }
 
       audioShield.eqBands(bass, midbass, mid, midtreble, treble);
@@ -173,7 +177,9 @@ void loop() {
       Serial.print(":");
       Serial.print(right-left);
       Serial.print(":");
-      Serial.println(vol);
+      Serial.print(vol);
+      Serial.print(":");
+      Serial.println(vpp[level]);
 
     }
 

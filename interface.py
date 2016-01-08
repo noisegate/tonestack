@@ -165,12 +165,12 @@ class Interface(object):
             if (c == ord('d')):
                 self.screen.addstr(2,2,"State change: tone defeat".ljust(30))
                 ser.write('d')
-            if (c == ord('l')):
+            if (c == ord('L')):
                 self.screen.addstr(2,2,"left".ljust(30))
-                ser.write('l')
-            if (c == ord('r')):
+                ser.write('L')
+            if (c == ord('l')):
                 self.screen.addstr(2,2,"right".ljust(30))
-                ser.write('r')
+                ser.write('l')
 
 
             if (c == ord('v')):
@@ -190,7 +190,7 @@ class Interface(object):
             while ser.inWaiting() > 0:
                 #self.screen.addstr(3,2+i,ser.read(1))
                 dummy = ser.read(1)
-                self.screen.addstr(4,2+i,dummy)
+                #self.screen.addstr(4,2+i,dummy)
                 msg.append(dummy)
                 #self.screen.addstr(3,2,s)
                 i=i+1
@@ -208,7 +208,7 @@ class Interface(object):
             if (i>0):
                 self.screen.addstr(3,2,''.join(msg))
                 self.Eqbox.draw()
-                self.Eqsplit.draw()
+                #self.Eqsplit.draw()
                 msgstr = ''.join(msg)
                 vals = msgstr.split(':')
                 self.Bassbar.set(float(vals[0]))
