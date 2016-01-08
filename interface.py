@@ -10,6 +10,52 @@ ser = serial.Serial(
     bytesize=serial.SEVENBITS
     )
 
+class Box(object):
+
+    def __init__(self, screen, x, y, width, height):
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+        self.screen = screen
+
+    def draw(self):
+
+        for x in range(self.width-1):
+            self.screen.addch(self.y, self.x+x, curses.ACS_HLINE)
+            self.screen.addch(self.y+self.height-1, self.x+x, curses.ACS_HLINE)
+        for y in range(self.height-1):
+            self.screen.addch(self.y+y, self.x, curses.ACS_VLINE)
+            self.screen.addch(self.y+y, self.x+self.width-1, curses.ACS_VLINE)
+
+        #self.screen.scrollok(True)
+        self.screen.addch(self.y, self.x, curses.ACS_ULCORNER)
+        self.screen.addch(self.y, self.x+self.width-1, curses.ACS_URCORNER)
+        self.screen.addch(self.y+self.height-1, self.x+self.width-1, curses.ACS_LRCORNER)
+        self.screen.addch(self.y+self.height-1, self.x, curses.ACS_LLCORNER)
+
+class Hline(object):
+
+    def __init__(self, screen, x, y, length):
+        self.screen = screen
+        self.x = x
+        self.y = y
+        self.lenght = length
+
+    def draw(self):
+
+        for x in range(self.lenght-1):
+            self.screen.addch(self.y, self.x + x, curses.ACS_HLINE)
+
+        self.screen.addch(self.y, self.x, curses.ACS_LTEE)
+        self.screen.addch(self.y, self.x+self.lenght-1, curses.ACS_RTEE)
+
+class Checkbox(object):
+
+    pass
+
+
+
 class Bar(object):
     TONE = 1
     VOL = 2
@@ -45,7 +91,8 @@ class Bar(object):
                 self.screen.addstr(self.y + self.height - i, self.x+j, " ", curses.A_REVERSE)
 
         for j in range(self.width):
-            self.screen.addstr(self.y+self.height/2, self.x+j, "-", curses.A_REVERSE)
+            self.screen.addch(self.y+self.height/2, self.x+j, curses.ACS_HLINE, curses.A_REVERSE)
+
 
 class Interface(object):
 
@@ -65,7 +112,7 @@ class Interface(object):
         
         ser.isOpen()
 
-        offset = 40
+        offset = 35
 
         self.Bassbar = Bar(self.screen, offset+0,15, "115Hz","B/b", Bar.TONE )
         self.Midbassbar = Bar(self.screen, offset+10, 15,"330Hz","N/n", Bar.TONE)
@@ -74,6 +121,8 @@ class Interface(object):
         self.Treblebar = Bar(self.screen, offset+40, 15,"9.9kHz","T/t",Bar.TONE)
         self.Volbar = Bar(self.screen, offset + 80, 15, "Volume","V/v",Bar.VOL)
 
+        self.Eqbox = Box(self.screen, offset-2, 12 , 90, 28)
+        self.Eqsplit = Hline(self.screen, offset-2, 25, 90)
         ser.write('?')
 
 
@@ -158,6 +207,8 @@ class Interface(object):
 
             if (i>0):
                 self.screen.addstr(3,2,''.join(msg))
+                self.Eqbox.draw()
+                self.Eqsplit.draw()
                 msgstr = ''.join(msg)
                 vals = msgstr.split(':')
                 self.Bassbar.set(float(vals[0]))
@@ -167,7 +218,6 @@ class Interface(object):
                 self.Treblebar.set(float(vals[4]))
                 self.Volbar.set(float(vals[6]))
                 self.screen.addstr(0,0,"Tone Control Interface".center(self.width), curses.A_REVERSE)
-
                 self.screen.refresh()
 
 

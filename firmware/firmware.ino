@@ -67,7 +67,27 @@ float treble = 0.0;
 float left = 0.0;
 float right = 0.0;
 
+float diff;
+float sign;
 int inByte;
+int step;
+
+void reduce(float *parameter)
+{
+    //prevent plops, slowly reduce in 0.04 steps
+    if (*parameter<0) sign = -1.0;
+    else sign = 1.0;
+  
+    step = (int)abs(*parameter/0.04);
+
+    for (int i=0; i<step;i++) {
+      
+      *parameter = *parameter - sign*0.04;
+      audioShield.eqBands(bass, midbass, mid, midtreble, treble);
+      delay(10);
+    }
+  
+}
 
 void loop() {
   // every 10 ms, check for adjustment
@@ -78,11 +98,12 @@ void loop() {
     if (Serial.available()>0){
       inByte = Serial.read();
       if (inByte=='d'){
-        bass = 0.0;
-        treble=0.0;
-        midbass=0.0;
-        midtreble=0.0;
-        mid=0.0;
+
+        if (bass!=0.0) reduce(&bass);
+        if (treble!=0.0) reduce(&treble);
+        if (midbass!=0.0) reduce(&midbass);
+        if (midtreble!=0.0) reduce(&midtreble);
+        if (mid!=0.0) reduce(&mid);
         //defeat
       }
       if (inByte == 'B'){
