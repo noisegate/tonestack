@@ -4,7 +4,7 @@ from time import sleep
 
 ser = serial.Serial(
     port='/dev/ttyACM0',
-    baudrate=9600,
+    baudrate=38400,#9600,
     parity=serial.PARITY_ODD,
     stopbits=serial.STOPBITS_TWO,
     bytesize=serial.SEVENBITS
@@ -60,6 +60,7 @@ class Checkbox(object):
 class Bar(object):
     TONE = 1
     VOL = 2
+    MEASURE = 3
 
     def __init__(self, screen,x ,y, name, legend, function):
         self.screen = screen
@@ -71,14 +72,21 @@ class Bar(object):
         self.legend = legend
         self.function = function
 
+        if (function == self.MEASURE):
+            self.width=3
+
+
     def set(self, val):
 
         if (self.function == self.TONE):
             ival = int(val * self.height/2)+self.height/2
             self.screen.addstr(self.y-1, self.x, "{0}dB".format(val/0.04*0.5))
-        else:
+        elif(self.function == self.VOL):
             ival = int(val * self.height)
             self.screen.addstr(self.y-1, self.x, "{0}%".format(val*100))
+        elif(self.function == self.MEASURE):
+            ival = int(val * self.height)
+            self.screen.addstr(self.y-1, self.x, "{0}".format(val))
 
         self.screen.addstr(self.y-2, self.x, self.name)
         self.screen.addstr(self.y+self.height+2,self.x,self.legend)
@@ -91,8 +99,14 @@ class Bar(object):
             for j in range(self.width):
                 self.screen.addstr(self.y + self.height - i, self.x+j, " ", curses.A_REVERSE)
 
-        for j in range(self.width):
-            self.screen.addch(self.y+self.height/2, self.x+j, curses.ACS_HLINE, curses.A_REVERSE)
+        if (self.function == self.TONE):
+            
+            for j in range(self.width):
+                if (val>0.0):
+                    self.screen.addch(self.y+self.height/2, self.x+j, curses.ACS_HLINE, curses.A_REVERSE)
+                else:
+                    self.screen.addch(self.y+self.height/2, self.x+j, curses.ACS_HLINE)
+
 
 
 class Interface(object):
@@ -121,7 +135,10 @@ class Interface(object):
         self.Midtreblebar = Bar(self.screen,offset+30, 15,"3kHz","Y/y",Bar.TONE)
         self.Treblebar = Bar(self.screen, offset+40, 15,"9.9kHz","T/t",Bar.TONE)
         self.Volbar = Bar(self.screen, offset + 80, 15, "Volume","V/v",Bar.VOL)
-        self.Peakl = Bar(self.screen, offset + 70, 15, "Peak", " ", Bar.VOL)
+        self.Peakl = Bar(self.screen, offset + 75, 15, "Peak", " ", Bar.MEASURE)
+        self.Cpubar = Bar(self.screen, offset + 55, 15, "CPU", " ", Bar.MEASURE)
+        self.ACpubar = Bar(self.screen, offset + 65, 15, "ACPU", " ", Bar.MEASURE)
+ 
         self.Eqbox = Box(self.screen, offset-2, 12 , 90, 28)
         self.Eqsplit = Hline(self.screen, offset-2, 25, 90)
         ser.write('?')
@@ -129,7 +146,7 @@ class Interface(object):
 
     def loop(self):
         go = 1
-
+        i=0
         while(go):
             sleep(0.1)
             peak=0
@@ -186,21 +203,28 @@ class Interface(object):
             elif (c == ord('V')):
                 self.screen.addstr(2,2,"V".ljust(30))
                 ser.write('V')
+            elif (c== ord('?')):
+                ser.write('?')
             elif (c == ord('q')):
                 self.quit()
                 return
             else:
-                peak = 1 
+                peak = 1
+                if (i==0):
+                    #pass
+                    ser.write('?')
             i=0
+            sleep(0.02)
 
             msg = []
+            self.screen.addstr(1,0,"Serial data waiting:{num:03d}".format(num=ser.inWaiting()))
             while ser.inWaiting() > 0:
                 #self.screen.addstr(3,2+i,ser.read(1))
                 dummy = ser.read(1)
                 #self.screen.addstr(4,2+i,dummy)
                 msg.append(dummy)
                 #self.screen.addstr(3,2,s)
-                i=i+1
+                i=1
                 #self.screen.addstr(0,0,"Tone Control Interface".center(self.width), curses.A_REVERSE)
                 #self.screen.addstr(5,2, "V = Volume")
                 #self.screen.addstr(6,2, "B = Bass  ")
@@ -226,7 +250,8 @@ class Interface(object):
                 self.Volbar.set(float(vals[6]))
                 if (peak):
                     self.Peakl.set(float(vals[8]))
-
+                self.Cpubar.set(float(vals[9])/2.0)
+                self.ACpubar.set(float(vals[10])/2.0)
                 self.screen.addstr(0,0,"Tone Control Interface".center(self.width), curses.A_REVERSE)
                 self.screen.refresh()
 
