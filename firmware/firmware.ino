@@ -1,6 +1,11 @@
-/* DAP Bass enhance example SGTL5000 only
-
-This example code is in the public domain
+/* silviamp
+ * using the teensy3.2 + audioshield as pre amp using 
+ * transistordyne pcb: 
+ * 
+ *
+ * 
+ *
+ *This example code is in the public domain
 */
 
 #include <Audio.h>
@@ -12,6 +17,7 @@ This example code is in the public domain
 
 #define ADJUSTTONE 0
 #define ADJUSTVOL 1
+#define ADJUSTLOUDNESS 2
 
 
 const int myInput = AUDIO_INPUT_LINEIN;
@@ -22,10 +28,11 @@ const float vpp[] = {1.16,1.22,1.29,1.37,1.44,1.53,1.62,1.71,1.8,1.91,2.02,2.14,
 // order data flows, inputs/sources -> processing -> outputs
 //
 
-const int adcVol = A7;
-const int adcTreble = A6;
-const int adcMid = A3;
-const int adcBass = A2;
+const int adcVol = A1;//A7
+const int adcTreble = A3;
+const int adcMid = A2;
+const int adcBass = A14;
+const int adcLoudness = A6;
 
 ADC *adc = new ADC();
 
@@ -100,6 +107,7 @@ void setup() {
   pinMode(adcTreble, INPUT);
   pinMode(adcMid, INPUT);
   pinMode(adcBass, INPUT);
+  pinMode(adcLoudness, INPUT);
   
   adc->setReference(ADC_REF_3V3, ADC_0);
   adc->setAveraging(32);
@@ -122,6 +130,7 @@ float midtreble=0.0;
 float treble = 0.0;
 float left = 0.0;
 float right = 0.0;
+float loudness = 0.0;
 
 float diff;
 float sign;
@@ -130,6 +139,7 @@ int step;
 int level=2;//default 
 
 int readvol_old = 0;
+int readloudness_old = 0;
 int readbass_old = 0;
 int readmid_old = 0;
 int readtreble_old = 0;
@@ -169,6 +179,30 @@ void adjust(float *parameter, float target, int function){
         audioShield.eqBands(bass, midbass, mid, midtreble, treble);
       if (function == ADJUSTVOL)
         audioShield.volume(vol);
+      if (function == ADJUSTLOUDNESS){
+        if (loudness < 0.1){
+          audioShield.autoVolumeDisable();
+        }
+        if (loudness >=0.1){
+          /*
+           * autoVolumeControl(maxGain, response, hardLimit, threshold, attack, decay);
+           * Configures the auto volume control, which is implemented as a compressor/expander or hard limiter. 
+           * maxGain is the maximum gain that can be applied for expanding, and can take one of three values: 0 (0dB), 1 (6.0dB) and 2 (12dB). 
+           * Values greater than 2 are treated as 2. 
+           * response controls the integration time for the compressor and can take four values: 0 (0ms), 1 (25ms), 2 (50ms) or 3 (100ms). 
+           * Larger values average the volume over a longer time, allowing short-term peaks through.
+           * If hardLimit is 0, a 'soft knee' compressor is used to progressively compress louder values which are near to or above the threashold 
+           * (the louder they are, the greater the compression). 
+           * If it is 1, a hard compressor is used (all values above the threashold are the same loudness). 
+           * The threashold is specified as a float in the range 0dBFS to -96dBFS, where -18dBFS is a typical value. 
+           * attack is a float controlling the rate of decrease in gain when the signal is over threashold, in dB/s. 
+           * decay controls how fast gain is restored once the level drops below threashold, again in dB/s. It is typically set to a longer value than attack.
+           */
+          audioShield.autoVolumeControl(0, 0, 0, (float)(-96.0*loudness), (float)35.0, (float)5.0);
+          audioShield.autoVolumeEnable();
+        }
+      }
+      
       delay(10);
     }
 }
@@ -209,6 +243,7 @@ void loop() {
     int readbass = (int)(adc->analogRead(adcBass, ADC_0));
     int readmid = (int)(adc->analogRead(adcMid, ADC_0));
     int readtreble = (int)(adc->analogRead(adcTreble, ADC_0));
+    int readloudness = (int)(adc->analogRead(adcLoudness, ADC_0));
     
     if (readvol!=readvol_old){
       //turned the volume knob
@@ -235,6 +270,12 @@ void loop() {
       target = readtreble/255.0*2.0-1.0;
       adjust(&treble, target, ADJUSTTONE);
       readmid_old = readmid;
+    }
+
+    if (readloudness!=readloudness_old){
+      target = readloudness/255.0/1.0;
+      adjust(&loudness, target, ADJUSTLOUDNESS);
+      readloudness_old = readloudness;      
     }
 
   
