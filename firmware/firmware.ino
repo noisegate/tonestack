@@ -2,7 +2,13 @@
  * using the teensy3.2 + audioshield as pre amp using 
  * transistordyne pcb: 
  * 
- *
+ * mixing up some controls: i dont need mid so, back to normal hifi
+ * BASS + TREBLE and using mid as treble, treble as width for surround
+ * 1 bass = bass
+ * 2 mid = treble
+ * 3 treble = width
+ * 4 loudness = compression
+ * 5 vol = vol
  * 
  *
  *This example code is in the public domain
@@ -18,7 +24,7 @@
 #define ADJUSTTONE 0
 #define ADJUSTVOL 1
 #define ADJUSTLOUDNESS 2
-
+#define ADJUSTSURROUND 3
 
 const int myInput = AUDIO_INPUT_LINEIN;
 // const int myInput = AUDIO_INPUT_MIC;
@@ -88,8 +94,10 @@ void setup() {
   // audioShield.enhanceBass((float)lr_level,(float)bass_level,(uint8_t)hpf_bypass,(uint8_t)cutoff);
   // please see http://www.pjrc.com/teensy/SGTL5000.pdf page 50 for valid values for BYPASS_HPF and CUTOFF
 
-  audioShield.eqSelect(3);//eq
-  audioShield.eqBands(0.0,0.0,0.0,0.0,0.0);
+  //audioShield.eqSelect(3);//5 bands eq
+  audioShield.eqSelect(2);//tone control mode 
+  //audioShield.eqBands(0.0,0.0,0.0,0.0,0.0);
+  audioShield.eqBands(0.0, 0.0);
   //audioShield.lineOutLevel(20, 20);
   //audioShield.muteHeadphone();
   audioShield.unmuteLineout();
@@ -176,9 +184,20 @@ void adjust(float *parameter, float target, int function){
       
       *parameter = *parameter - sign*0.04;
       if (function == ADJUSTTONE)
-        audioShield.eqBands(bass, midbass, mid, midtreble, treble);
+        //audioShield.eqBands(bass, midbass, mid, midtreble, treble);
+        audioShield.eqBands(bass, mid);
       if (function == ADJUSTVOL)
         audioShield.volume(vol);
+      if (function == ADJUSTSURROUND){
+        if (treble < 1){
+          audioShield.surroundSound(7, 3);
+          audioShield.surroundSoundDisable(); 
+        }
+        if (treble > 1){
+          audioShield.surroundSoundEnable();
+          audioShield.surroundSound((int)treble, 3); 
+        }
+      }
       if (function == ADJUSTLOUDNESS){
         if (loudness < 0.1){
           audioShield.autoVolumeDisable();
@@ -198,7 +217,7 @@ void adjust(float *parameter, float target, int function){
            * attack is a float controlling the rate of decrease in gain when the signal is over threashold, in dB/s. 
            * decay controls how fast gain is restored once the level drops below threashold, again in dB/s. It is typically set to a longer value than attack.
            */
-          audioShield.autoVolumeControl(0, 0, 0, (float)(-96.0*loudness), (float)35.0, (float)5.0);
+          audioShield.autoVolumeControl(0, 0, 0, (float)(-96.0*loudness), (float)16.0, (float)2.0);
           audioShield.autoVolumeEnable();
         }
       }
@@ -218,7 +237,8 @@ void reduce(float *parameter)
     for (int i=0; i<step;i++) {
       
       *parameter = *parameter - sign*0.04;
-      audioShield.eqBands(bass, midbass, mid, midtreble, treble);
+      //audioShield.eqBands(bass, midbass, mid, midtreble, treble);
+      audioShield.eqBands(bass, mid);
       delay(10);
     }
   
@@ -267,8 +287,8 @@ void loop() {
 
 
     if (readtreble!=readtreble_old){
-      target = readtreble/255.0*2.0-1.0;
-      adjust(&treble, target, ADJUSTTONE);
+      target = readtreble/255.0 * 7;
+      adjust(&treble, target, ADJUSTSURROUND);
       readmid_old = readmid;
     }
 
@@ -345,7 +365,8 @@ void loop() {
         audioShield.lineOutLevel(linelevel[level]);
       }
 
-      audioShield.eqBands(bass, midbass, mid, midtreble, treble);
+      //audioShield.eqBands(bass, midbass, mid, midtreble, treble);
+      audioShield.eqBands(bass, mid);
       audioShield.volume(vol);
 
       //Some of the extra stuff
