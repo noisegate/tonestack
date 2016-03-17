@@ -170,30 +170,39 @@ float sign(float parameter){
 void adjust(float *parameter, float target, int function){
     //prevent plops, slowly reduce in 0.04 steps
     float difference;
-
+    float stepsize;
+    
     difference = *parameter - target;
     
     if (difference == 0.0) return;
     
     if (difference>0.0) sign = +1.0;
     else sign = -1.0;
-  
-    step = (int)abs(difference/0.04);
+
+    if ((function == ADJUSTTONE) || (function == ADJUSTVOL))
+      stepsize = 0.04;
+     else if (function == ADJUSTSURROUND)
+      stepsize = 0.5;
+     else if (function == ADJUSTLOUDNESS)
+      stepsize = 0.05;
+     else stepsize = 0.05;
+            
+    step = (int)abs(difference/stepsize);
 
     for (int i=0; i<step;i++) {
       
-      *parameter = *parameter - sign*0.04;
+      *parameter = *parameter - sign*stepsize;
       if (function == ADJUSTTONE)
         //audioShield.eqBands(bass, midbass, mid, midtreble, treble);
         audioShield.eqBands(bass, mid);
       if (function == ADJUSTVOL)
         audioShield.volume(vol);
       if (function == ADJUSTSURROUND){
-        if (treble < 1){
+        if (treble <= 1.0){
           audioShield.surroundSound(7, 3);
           audioShield.surroundSoundDisable(); 
         }
-        if (treble > 1){
+        if (treble > 1.0){
           audioShield.surroundSoundEnable();
           audioShield.surroundSound((int)treble, 3); 
         }
@@ -217,7 +226,7 @@ void adjust(float *parameter, float target, int function){
            * attack is a float controlling the rate of decrease in gain when the signal is over threashold, in dB/s. 
            * decay controls how fast gain is restored once the level drops below threashold, again in dB/s. It is typically set to a longer value than attack.
            */
-          audioShield.autoVolumeControl(0, 0, 0, (float)(-96.0*loudness), (float)16.0, (float)2.0);
+          audioShield.autoVolumeControl(2, 0, 1, (float)(-96.0*loudness), (float)16.0, (float)2.0);
           audioShield.autoVolumeEnable();
         }
       }
@@ -287,7 +296,7 @@ void loop() {
 
 
     if (readtreble!=readtreble_old){
-      target = readtreble/255.0 * 7;
+      target = readtreble/255.0 * 7.0;
       adjust(&treble, target, ADJUSTSURROUND);
       readmid_old = readmid;
     }
