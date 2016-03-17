@@ -18,7 +18,7 @@
 #include <Wire.h>
 #include <SPI.h>
 #include <SD.h>
-#include <SerialFlash.h>
+//#include <SerialFlash.h>
 #include <ADC.h>
 
 #define ADJUSTTONE 0
@@ -86,6 +86,7 @@ void setup() {
   audioShield.inputSelect(myInput);
   audioShield.volume(0.0);
   // just enable it to use default settings.
+  audioShield.audioPreProcessorEnable();
   audioShield.audioPostProcessorEnable();
   //audioShield.enhanceBassEnable(); // all we need to do for default bass enhancement settings.
   //audioShield.enhanceBass((float)lr_level,(float)bass_level);
@@ -98,9 +99,11 @@ void setup() {
   audioShield.eqSelect(2);//tone control mode 
   //audioShield.eqBands(0.0,0.0,0.0,0.0,0.0);
   audioShield.eqBands(0.0, 0.0);
-  //audioShield.lineOutLevel(20, 20);
-  //audioShield.muteHeadphone();
-  audioShield.unmuteLineout();
+  audioShield.lineInLevel(5);//def
+  audioShield.lineOutLevel(29);//def
+  audioShield.dacVolume(1.0);
+  audioShield.unmuteHeadphone();
+  
 
 
   //sint test
@@ -179,13 +182,15 @@ void adjust(float *parameter, float target, int function){
     if (difference>0.0) sign = +1.0;
     else sign = -1.0;
 
-    if ((function == ADJUSTTONE) || (function == ADJUSTVOL))
+    if (function == ADJUSTTONE) 
       stepsize = 0.04;
-     else if (function == ADJUSTSURROUND)
-      stepsize = 0.5;
-     else if (function == ADJUSTLOUDNESS)
+    else if (function == ADJUSTVOL)
       stepsize = 0.05;
-     else stepsize = 0.05;
+    else if (function == ADJUSTSURROUND)
+      stepsize = 0.5;
+    else if (function == ADJUSTLOUDNESS)
+      stepsize = 0.05;
+    else stepsize = 0.05;
             
     step = (int)abs(difference/stepsize);
 
@@ -195,8 +200,14 @@ void adjust(float *parameter, float target, int function){
       if (function == ADJUSTTONE)
         //audioShield.eqBands(bass, midbass, mid, midtreble, treble);
         audioShield.eqBands(bass, mid);
-      if (function == ADJUSTVOL)
-        audioShield.volume(vol);
+      if (function == ADJUSTVOL){
+        if (vol<0.05) {
+          audioShield.volume(0.0);
+        }
+        else{
+          audioShield.volume(vol);
+        }
+      }
       if (function == ADJUSTSURROUND){
         if (treble <= 1.0){
           audioShield.surroundSound(7, 3);
@@ -209,6 +220,8 @@ void adjust(float *parameter, float target, int function){
       }
       if (function == ADJUSTLOUDNESS){
         if (loudness < 0.1){
+          audioShield.dacVolume(1.0);
+          audioShield.autoVolumeControl(0, 0, 0, 0.0, (float)16.0, (float)2.0);
           audioShield.autoVolumeDisable();
         }
         if (loudness >=0.1){
@@ -226,7 +239,8 @@ void adjust(float *parameter, float target, int function){
            * attack is a float controlling the rate of decrease in gain when the signal is over threashold, in dB/s. 
            * decay controls how fast gain is restored once the level drops below threashold, again in dB/s. It is typically set to a longer value than attack.
            */
-          audioShield.autoVolumeControl(2, 0, 1, (float)(-96.0*loudness), (float)16.0, (float)2.0);
+          audioShield.dacVolume(1.0);
+          audioShield.autoVolumeControl(0, 0, 0, (float)(-18.0*loudness), (float)16.0, (float)2.0);
           audioShield.autoVolumeEnable();
         }
       }
@@ -302,8 +316,20 @@ void loop() {
     }
 
     if (readloudness!=readloudness_old){
-      target = readloudness/255.0/1.0;
-      adjust(&loudness, target, ADJUSTLOUDNESS);
+      target = readloudness/255.0;
+      //adjust(&loudness, target, ADJUSTLOUDNESS);
+      loudness = target;
+      if (target>0.1){
+        audioShield.dacVolume(1.0);
+        audioShield.autoVolumeControl(0, 2, 0, (float)(-18.0), (float)2.0, (float)0.8);
+        audioShield.autoVolumeEnable();
+      }else{
+        
+        audioShield.autoVolumeControl(0, 0, 0, (float)(0.0), (float)16.0, (float)0.8);
+        audioShield.autoVolumeDisable();
+        audioShield.dacVolume(1.0);
+      }
+      
       readloudness_old = readloudness;      
     }
 
@@ -400,7 +426,7 @@ void loop() {
       Serial.print(":");
       Serial.print(treble);   //4
       Serial.print(":");
-      Serial.print(right-left);//5
+      Serial.print(loudness);//5
       Serial.print(":");
       Serial.print(vol);      //6
       Serial.print(":");
