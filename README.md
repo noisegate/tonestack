@@ -3,6 +3,9 @@
 Use the teensy 3n + audio shield as tone controller/pre amp with PC
 as interface
 
+##Disclaimer
+This is work in progress, hobby project etc..
+
 ##Module with analog pots
 ![alt text][pcb]
 
