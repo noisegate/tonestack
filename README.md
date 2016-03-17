@@ -6,7 +6,7 @@ as interface
 ##Module with analog pots
 ![alt text][pcb]
 
-[pcb]: https://github.com/noisegate/tonestack/blob/master/artwork/P1010410_small.jpg
+[pcb]: https://github.com/noisegate/tonestack/blob/silviamp/artwork/P1010410_small.jpg
 
 ##Screenshot
 
