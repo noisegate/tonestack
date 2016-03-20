@@ -321,7 +321,7 @@ void loop() {
       loudness = target;
       if (target>0.1){
         audioShield.dacVolume(1.0);
-        audioShield.autoVolumeControl(0, 2, 0, (float)(-18.0), (float)2.0, (float)0.8);
+        audioShield.autoVolumeControl(0, 2, 0, (float)(-18.0), (float)1.2, (float)0.8);
         audioShield.autoVolumeEnable();
       }else{
         
