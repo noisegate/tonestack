@@ -100,8 +100,8 @@ void setup() {
   audioShield.eqSelect(2);//tone control mode 
   //audioShield.eqBands(0.0,0.0,0.0,0.0,0.0);
   audioShield.eqBands(0.0, 0.0);
-  audioShield.lineInLevel(5);//def
-  audioShield.lineOutLevel(29);//def
+  audioShield.lineInLevel(0);//def
+  audioShield.lineOutLevel(13);//def
   audioShield.dacVolume(1.0);
   audioShield.unmuteHeadphone();
   
