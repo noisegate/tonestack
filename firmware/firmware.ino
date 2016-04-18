@@ -1,4 +1,3 @@
-
 /* silviamp
  * using the teensy3.2 + audioshield as pre amp using 
  * transistordyne pcb: 
@@ -26,6 +25,7 @@
 #define ADJUSTVOL 1
 #define ADJUSTLOUDNESS 2
 #define ADJUSTSURROUND 3
+#define ADJUSTBALANCE 4
 
 const int myInput = AUDIO_INPUT_LINEIN;
 // const int myInput = AUDIO_INPUT_MIC;
@@ -85,6 +85,7 @@ void setup() {
   // Enable the audio shield and set the output volume.
   audioShield.enable();
   audioShield.inputSelect(myInput);
+  audioShield.dacVolumeRamp();
   audioShield.volume(0.0);
   // just enable it to use default settings.
   audioShield.audioPreProcessorEnable();
@@ -122,8 +123,10 @@ void setup() {
   pinMode(adcLoudness, INPUT);
   
   adc->setReference(ADC_REF_3V3, ADC_0);
+  adc->setReference(ADC_REF_3V3, ADC_1);
   adc->setAveraging(32);
-  adc->setResolution(8);
+  adc->setResolution(8, ADC_0);
+  adc->setResolution(8, ADC_1); // set bits of resolution
   adc->setConversionSpeed(ADC_LOW_SPEED);
   adc->setSamplingSpeed(ADC_LOW_SPEED);
   
@@ -185,6 +188,8 @@ void adjust(float *parameter, float target, int function){
 
     if (function == ADJUSTTONE) 
       stepsize = 0.04;
+    else if (function == ADJUSTBALANCE)
+      stepsize = 0.01;
     else if (function == ADJUSTVOL)
       stepsize = 0.05;
     else if (function == ADJUSTSURROUND)
@@ -193,7 +198,7 @@ void adjust(float *parameter, float target, int function){
       stepsize = 0.05;
     else stepsize = 0.05;
             
-    step = (int)abs(difference/stepsize);
+    step = (int)(abs(difference/stepsize)+0.5);
 
     for (int i=0; i<step;i++) {
       
@@ -245,6 +250,16 @@ void adjust(float *parameter, float target, int function){
           audioShield.autoVolumeEnable();
         }
       }
+
+      if (function == ADJUSTBALANCE){
+        if (loudness<0.4)
+          audioShield.dacVolume(1.0, loudness+0.6);
+        else if (loudness>0.6)
+          audioShield.dacVolume(1.6-loudness, 1.0);
+        else
+          audioShield.dacVolume(1.0);  
+      }
+      
       
       delay(10);
     }
@@ -313,9 +328,11 @@ void loop() {
     if (readtreble!=readtreble_old){
       target = readtreble/255.0 * 7.0;
       adjust(&treble, target, ADJUSTSURROUND);
-      readmid_old = readmid;
+      readtreble_old = readtreble;
     }
 
+    //compressor implementation  
+    /*
     if (readloudness!=readloudness_old){
       target = readloudness/255.0;
       //adjust(&loudness, target, ADJUSTLOUDNESS);
@@ -330,7 +347,13 @@ void loop() {
         audioShield.autoVolumeDisable();
         audioShield.dacVolume(1.0);
       }
-      
+    */
+    
+    //balance implementation
+    if (readloudness!=readloudness_old){
+      target = readloudness/255.0;
+      adjust(&loudness, target, ADJUSTBALANCE);
+      loudness = target;
       readloudness_old = readloudness;      
     }
 
