@@ -92,7 +92,7 @@ void setup() {
   audioShield.audioPostProcessorEnable();
   //audioShield.enhanceBassEnable(); // all we need to do for default bass enhancement settings.
   //audioShield.enhanceBass((float)lr_level,(float)bass_level);
-  
+  audioShield.autoVolumeDisable();
   //celloaudioShield.enhanceBass((float)0.5,(float)0.5);
   // audioShield.enhanceBass((float)lr_level,(float)bass_level,(uint8_t)hpf_bypass,(uint8_t)cutoff);
   // please see http://www.pjrc.com/teensy/SGTL5000.pdf page 50 for valid values for BYPASS_HPF and CUTOFF
