@@ -60,7 +60,7 @@ AudioControlSGTL5000 audioShield;
 //AudioConnection          patchCord1(adc1, fft256_1);
 
 //peak stuff
-AudioAnalyzePeak         peak1;          //xy=352,74
+//AudioAnalyzePeak         peak1;          //xy=352,74
 //AudioAnalyzePeak         peak2;          //xy=358,112
 
 //ORIG
@@ -86,7 +86,7 @@ void setup() {
   audioShield.enable();
   audioShield.inputSelect(myInput);
   audioShield.dacVolumeRamp();
-  audioShield.volume(0.0);
+  audioShield.volume(0.8);
   // just enable it to use default settings.
   audioShield.audioPreProcessorEnable();
   audioShield.audioPostProcessorEnable();
@@ -101,10 +101,13 @@ void setup() {
   audioShield.eqSelect(2);//tone control mode 
   //audioShield.eqBands(0.0,0.0,0.0,0.0,0.0);
   audioShield.eqBands(0.0, 0.0);
-  audioShield.lineInLevel(0);//def
-  audioShield.lineOutLevel(13);//def
+  //audioShield.lineInLevel(0);//def
+  //audioShield.lineOutLevel(13);//def
+  audioShield.lineInLevel(5);//def
+  audioShield.lineOutLevel(29);//def
   audioShield.dacVolume(1.0);
   audioShield.unmuteHeadphone();
+  audioShield.adcHighPassFilterDisable();
   
 
 
@@ -124,7 +127,8 @@ void setup() {
   
   adc->setReference(ADC_REF_3V3, ADC_0);
   adc->setReference(ADC_REF_3V3, ADC_1);
-  adc->setAveraging(32);
+  adc->setAveraging(32, ADC_0);
+  adc->setAveraging(32, ADC_1);
   adc->setResolution(8, ADC_0);
   adc->setResolution(8, ADC_1); // set bits of resolution
   adc->setConversionSpeed(ADC_LOW_SPEED);
@@ -178,7 +182,7 @@ void adjust(float *parameter, float target, int function){
     //prevent plops, slowly reduce in 0.04 steps
     float difference;
     float stepsize;
-    
+    //return;
     difference = *parameter - target;
     
     if (difference == 0.0) return;
@@ -430,15 +434,15 @@ void loop() {
 
       //Some of the extra stuff
 
-      
+      /*
       if (peak1.available()){
         peakval = peak1.read();
       }
-      
+      */
       
       ACPU = AudioProcessorUsage();
       AMEM = AudioMemoryUsage();
-      CPU = peak1.processorUsage();
+      //CPU = peak1.processorUsage();
       
       Serial.print(bass);     //0
       Serial.print(":");
@@ -458,8 +462,8 @@ void loop() {
       Serial.print(":");
       Serial.print(peakval);  //8
       Serial.print(":");
-      Serial.print(CPU);     //9
-      Serial.print(":");
+      //Serial.print(CPU);     //9
+      //Serial.print(":");
       Serial.print(ACPU);     //10
       Serial.print(":");
       Serial.print(AMEM);   //11
